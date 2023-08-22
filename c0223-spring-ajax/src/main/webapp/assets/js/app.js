@@ -42,6 +42,8 @@ class App {
 }
 
 
+
+
 class LocationRegion {
     constructor(id, provinceId, provinceName, districtId, districtName, wardId, wardName, address) {
         this.id = id;

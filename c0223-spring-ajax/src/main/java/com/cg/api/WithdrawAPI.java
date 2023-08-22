@@ -1,5 +1,6 @@
 package com.cg.api;
 
+import com.cg.exception.DataInputException;
 import com.cg.model.Customer;
 import com.cg.model.Withdraw;
 import com.cg.model.dto.customer.CustomerResDTO;
@@ -39,9 +40,7 @@ public class WithdrawAPI {
         }
 
         if (!validateUtils.isNumberValid(customerIdStr)) {
-            Map<String, String> data = new HashMap<>();
-            data.put("message", "Mã khách hàng không hợp lệ");
-            return new ResponseEntity<>(data, HttpStatus.BAD_REQUEST);
+            throw new RuntimeException("Mã khách hàng không hợp lệ");
         }
 
         Long customerId = Long.parseLong(customerIdStr);
@@ -49,13 +48,17 @@ public class WithdrawAPI {
         Optional<Customer> customerOptional = customerService.findById(customerId);
 
         if (customerOptional.isEmpty()){
-             Map<String, String> data = new HashMap<>();
-            data.put("message", "Mã khách hàng không tồn tại");
-            return new ResponseEntity<>(data, HttpStatus.BAD_REQUEST);
+             throw new RuntimeException("Mã khách hàng không tồn tại");
         }
 
         Customer customer = customerOptional.get();
+
         BigDecimal transactionAmount = BigDecimal.valueOf(Long.parseLong(withdrawCreReqDTO.getTransactionAmount()));
+
+        if (customer.getBalance().compareTo(transactionAmount) < 0){
+            throw new DataInputException("số tiền rút vượt quá tiền tài khoản");
+        }
+
         Withdraw withdraw = new Withdraw();
 
         withdraw.setTransactionAmount(transactionAmount);

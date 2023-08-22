@@ -17,7 +17,7 @@ import java.math.BigDecimal;
 @Setter
 @Entity
 @Table(name = "withdraws")
-public class Withdraw extends BaseEntity implements Validator {
+public class Withdraw extends BaseEntity  {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,31 +30,5 @@ public class Withdraw extends BaseEntity implements Validator {
     @Column(name = "transaction_amount", precision = 10, scale = 0, nullable = false)
     private BigDecimal transactionAmount;
 
-    @Override
-    public boolean supports(Class<?> clazz) {
-        return Withdraw.class.isAssignableFrom(clazz);
-    }
 
-    @Override
-    public void validate(Object target, Errors errors) {
-        Withdraw withdraw = (Withdraw) target;
-
-        BigDecimal transactionAmount = withdraw.getTransactionAmount();
-        if (transactionAmount == (null)) {
-            errors.rejectValue("transactionAmount", "withdraw.transactionAmount.null");
-            return;
-        }
-
-        BigDecimal updateBalance = withdraw.customer.getBalance().subtract(transactionAmount);
-        BigDecimal minBalance = BigDecimal.valueOf(0L);
-
-
-        if (transactionAmount.compareTo(BigDecimal.ZERO) < 0){
-            errors.rejectValue("transactionAmount","withdraw.transactionAmount.zero");
-        }
-        if (updateBalance.compareTo(minBalance) < 0) {
-            errors.rejectValue("transactionAmount", "withdraw.transactionAmount.min");
-        }
-
-    }
 }

@@ -30,31 +30,6 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
             "FROM Customer as cus " +
             "WHERE cus.deleted = false ")
     List<CustomerResDTO> findAllCustomerResDTO();
-
-//    @Query("UPDATE Customer  AS cus SET " +
-//            "cus.fullName = :fullName," +
-//            "cus.email = :email ," +
-//            "cus.phone = :phone," +
-//            "cus.locationRegion.districtId = :districtId," +
-//            "cus.locationRegion.districtName = :districtName," +
-//            "cus.locationRegion.provinceId = :provinceId," +
-//            "cus.locationRegion.provinceName = :provinceNAme," +
-//            "cus.locationRegion.wardId = :wardId," +
-//            "cus.locationRegion.wardName = :wardName," +
-//            "cus.locationRegion.address = :address " +
-//            "WHERE cus.id = :id")
-//    void update(@Param("id") Long id,
-//                @Param("fullName") String fullName,
-//                @Param("email") String email,
-//                @Param("phone") String phone,
-//                @Param("districtId") Long districtId,
-//                @Param("districtName") String districtName,
-//                @Param("provinceId") Long provinceId,
-//                @Param("provinceName") String provinceName,
-//                @Param("wardId") Long wardId,
-//                @Param("wardName") String wardName,
-//                @Param("address") String address);
-
     @Modifying
     @Query("UPDATE Customer AS cus SET cus.balance = cus.balance + :amount WHERE cus.id = :id")
     void incrementBalance(@Param("id") Long id, @Param("amount") BigDecimal amount);

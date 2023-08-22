@@ -1,5 +1,6 @@
 package com.cg.api;
 
+import com.cg.exception.DataInputException;
 import com.cg.model.Customer;
 import com.cg.model.dto.transfer.TransferCreReqDTO;
 import com.cg.model.dto.transfer.TransferCreResDTO;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,14 +37,24 @@ public class TransferAPI {
         Long senderId = transferCreReqDTO.getSenderId();
         Long recipientId = transferCreReqDTO.getRecipientId();
 
+        Customer sender = customerService.findById(senderId).get();
+
+        BigDecimal totalSender = transferCreReqDTO.getTransferAmount().add(transferCreReqDTO.getTransferAmount().multiply(BigDecimal.valueOf(0.1)));
+
+        if (sender.getBalance().compareTo(totalSender) < 0) {
+            throw new DataInputException("tài khoản của bạn không đủ để thực hiện");
+        }
+
+
         customerService.transfer(transferCreReqDTO);
+        Customer senderNew = customerService.findById(senderId).get();
+        Customer recipientNew = customerService.findById(recipientId).get();
 
         TransferCreResDTO transferCreResDTO = new TransferCreResDTO();
-        Customer sender = customerService.findById(senderId).get();
-        Customer recipient = customerService.findById(recipientId).get();
 
-        transferCreResDTO.setSender(sender.toCustomerResDTO());
-        transferCreResDTO.setRecipient(recipient.toCustomerResDTO());
+
+        transferCreResDTO.setSender(senderNew.toCustomerResDTO());
+        transferCreResDTO.setRecipient(recipientNew.toCustomerResDTO());
 
         return new ResponseEntity<>(transferCreResDTO, HttpStatus.OK);
     }

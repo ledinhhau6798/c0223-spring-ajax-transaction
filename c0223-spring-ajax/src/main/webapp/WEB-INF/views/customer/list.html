@@ -16,12 +16,12 @@
             <h1>List of customers</h1>
         </div>
         <div class="col-lg-6 header-right-button">
-            <a href="#">
-                <button class="btn btn-outline-light">
+
+                <button class="btn btn-outline-light" id="btnShowHistoryTransfer">
                     <i class="fas fa-history"></i>
                     Transfer histories
                 </button>
-            </a>
+
             <button class="btn btn-outline-light" id="btnShowCreateModal">
                 <i class="fas fa-user-plus"></i>
                 Add new customer
@@ -62,6 +62,9 @@
 <th:block th:replace="/customer/modalWithdraw"/>
 <th:block th:replace="/customer/modalTransfer"/>
 
+<!-- Modal History Transfer -->
+    <th:block th:replace="/customer/historyTransfer"></th:block>
+
 <script src="/assets/js/jquery-3.6.0.min.js"></script>
 <script src="/assets/js/jquery.validate.min.js"></script>
 <script src="/assets/sweetalert2/v11.7.12/sweetalert2.all.min.js"></script>
@@ -83,7 +86,8 @@
             deposit: App.API_DEPOSIT,
             withdraw: App.API_WITHDRAW,
             transfer: App.API_TRANSFER,
-            delete: App.API_DELETE
+            delete: App.API_DELETE,
+            GetAllHistoryTransfer: App.API_SERVER + '/history/transfer'
         },
         elements: {},
         loadData: {},
@@ -94,6 +98,12 @@
         },
         initializeControlEvent: {}
     }
+
+    page.elements.btnShowHistoryTransfer = $('#btnShowHistoryTransfer')
+    page.elements.tbHistoryTransfer = $('#tbHistoryTransfer tbody')
+    page.dialogs.elements.modalHistoryTransfer = $('#mdHistoryTransfer')
+    page.dialogs.elements.btnHistoryTransfer = $('#btnHistoryTransfer')
+
 
     page.elements.btnShowCreateModal = $('#btnShowCreateModal');
     page.elements.tbCustomerBody = $('#tbCustomer tbody');
@@ -158,6 +168,38 @@
     let customer = new Customer();
     let customerId = 0;
     let deposit = new Deposit();
+
+
+
+    page.commands.getAllHistoryTransfer = () => {
+        $.ajax({
+            type:'GET',
+            url: page.url.GetAllHistoryTransfer
+        })
+            .done((data) =>{
+
+                let str = '';
+                $.each(data,(index,item) =>{
+                    str += page.commands.renderTransfer(item);
+                })
+
+                page.elements.tbHistoryTransfer.empty(str).append(str)
+                page.dialogs.elements.modalHistoryTransfer.modal('show');
+            })
+    }
+    page.commands.renderTransfer = (obj) => {
+        return `<tr id='trTF_${obj.id}'>
+            <td>${obj.id}</td>
+            <td>${obj.sender}</td>
+            <td>${obj.emailSender}</td>
+            <td>${obj.transferAmount}</td>
+            <td>${obj.transactionAmount}</td>
+            <td>${obj.recipient}</td>
+            <td>${obj.emailRecipient}</td>
+
+        </tr>`
+            ;
+    }
 
 
     page.commands.renderCustomer = (customer, locationRegion) => {
@@ -309,7 +351,7 @@
                 $.each(wards, (index, item) => {
                     const str = `<option value="${item.ward_id}">${item.ward_name}</option>`;
                     page.dialogs.elements.wardCre.append(str);
-                   page.dialogs.elements.wardUp.append(str);
+                    page.dialogs.elements.wardUp.append(str);
                 });
             })
     }
@@ -638,6 +680,8 @@
                 App.showSuccessAlert('Giao dịch chuyển tiền thành công');
             })
             .fail((jqXHR) => {
+
+                console.log(jqXHR);
                 const responseJSON = jqXHR.responseJSON;
 
                 page.dialogs.elements.errorAreaTransfer.empty();
@@ -708,6 +752,170 @@
         });
     }
 
+    page.dialogs.elements.frmTransfer.validate({
+        rules:{
+            transferAmountTrf:{
+                required:true,
+                isNumberWithSpace: true
+            }
+        },
+        messages:{
+            transferAmountTrf:{
+                required:'vui lòng nhập tiền giao dịch',
+                isNumberWithSpace: 'Vui lòng nhập tiền giao dịch bằng ký tự số',
+            }
+        },
+        errorLabelContainer: "#modalTransfer .error-area",
+            errorPlacement: function (error, element) {
+                error.appendTo("#modalTransfer .error-area");
+            },
+            showErrors: function(errorMap, errorList) {
+                if (this.numberOfInvalids() > 0) {
+                    $("#modalTransfer .error-area").removeClass("hide").addClass("show");
+                } else {
+                    $("#modalTransfer .error-area").removeClass("show").addClass("hide").empty();
+                    $("#frmTransfer input.error").removeClass("error");
+                }
+                this.defaultShowErrors();
+            },
+        submitHandler: function () {
+            page.dialogs.commands.transfer();
+        }
+    })
+
+    page.dialogs.elements.frmWithdraw.validate({
+        rules:{
+            transactionAmountWd:{
+                required:true,
+                isNumberWithSpace: true
+            }
+        },
+        messages:{
+            transactionAmountWd:{
+                required:'vui lòng nhập tiền giao dịch',
+                isNumberWithSpace: 'Vui lòng nhập tiền giao dịch bằng ký tự số',
+            }
+        },
+        errorLabelContainer: "#modalWithdraw .error-area",
+            errorPlacement: function (error, element) {
+                error.appendTo("#modalWithdraw .error-area");
+            },
+            showErrors: function(errorMap, errorList) {
+                if (this.numberOfInvalids() > 0) {
+                    $("#modalWithdraw .error-area").removeClass("hide").addClass("show");
+                } else {
+                    $("#modalWithdraw .error-area").removeClass("show").addClass("hide").empty();
+                    $("#frmWithdraw input.error").removeClass("error");
+                }
+                this.defaultShowErrors();
+            },
+        submitHandler: function () {
+            page.dialogs.commands.withdraw();
+        }
+    })
+
+    page.dialogs.elements.frmDeposit.validate({
+        rules:{
+            transactionAmountDep:{
+                required:true,
+                isNumberWithSpace: true
+            }
+        },
+        messages:{
+            transactionAmountDep:{
+                required:'vui lòng nhập tiền giao dịch',
+                isNumberWithSpace: 'Vui lòng nhập tiền giao dịch bằng ký tự số',
+            }
+        },
+        errorLabelContainer: "#modalDeposit .error-area",
+            errorPlacement: function (error, element) {
+                error.appendTo("#modalDeposit .error-area");
+            },
+            showErrors: function(errorMap, errorList) {
+                if (this.numberOfInvalids() > 0) {
+                    $("#modalDeposit .error-area").removeClass("hide").addClass("show");
+                } else {
+                    $("#modalDeposit .error-area").removeClass("show").addClass("hide").empty();
+                    $("#frmDeposit input.error").removeClass("error");
+                }
+                this.defaultShowErrors();
+            },
+        submitHandler: function () {
+            page.dialogs.commands.deposit();
+        }
+    })
+
+    page.dialogs.elements.frmUpdate.validate({
+        rules: {
+            fullNameUp: {
+                required: true,
+            },
+            emailUp: {
+                required: true,
+                isEmail:true
+            },
+            phoneUp: {
+                required:true,
+                isNumberWithSpace: true
+            }
+        },
+        messages:{
+            fullNameUp:{
+                required:'Vui lòng nhập họ tên đầy đủ'
+            },
+            emailUp:{
+                required:'vui lòng nhập email',
+                isEmail: 'vui lòng nhập đúng dạng email'
+            },
+            phoneUp:{
+                required:'vui lòng nhập số điện thoại',
+                isNumberWithSpace: 'vui lòng nhập đúng số điện thoại'
+            }
+        },
+        submitHandler: function () {
+            page.dialogs.commands.update();
+        }
+    })
+
+    page.dialogs.elements.frmCreate.validate({
+        rules: {
+            fullNameCre: {
+                required: true,
+            },
+            emailCre: {
+                required: true,
+                isEmail:true
+            },
+            phoneCre: {
+                required:true,
+                isNumberWithSpace: true
+            }
+        },
+        messages:{
+            fullNameCre:{
+                required:'Vui lòng nhập họ tên đầy đủ'
+            },
+            emailCre:{
+                required:'vui lòng nhập email',
+                isEmail: 'vui lòng nhập đúng dạng email'
+            },
+            phoneCre:{
+                required:'vui lòng nhập số điện thoại',
+                isNumberWithSpace: 'vui lòng nhập đúng số điện thoại'
+            }
+        },
+        submitHandler: function () {
+            page.dialogs.commands.create();
+        }
+    })
+
+    $.validator.addMethod("isEmail", function (value, element) {
+        return this.optional(element) || /[a-z]+@[a-z]+\.[a-z]+/.test(value);
+    }, "Vui lòng nhập đúng định dạng email");
+
+    $.validator.addMethod("isNumberWithSpace", function (value, element) {
+        return this.optional(element) || /^\s*[0-9,\s]+\s*$/i.test(value);
+    }, "Vui lòng nhập giá trị số");
 
     page.initializeControlEvent = () => {
 
@@ -719,6 +927,10 @@
 
             const str = page.commands.renderFooter(customerId);
             page.elements.footer.empty().append(str);
+        })
+
+        page.elements.btnShowHistoryTransfer.on('click',() => {
+            page.commands.getAllHistoryTransfer();
         })
 
         page.dialogs.elements.provinceCre.on('change', function () {
@@ -742,7 +954,7 @@
 
         page.dialogs.elements.districtCre.on('change', function () {
             const districtId = $(this).val();
-            page.commands.getAllWards(districtId,page.dialogs.elements.wardCre);
+            page.commands.getAllWards(districtId, page.dialogs.elements.wardCre);
         })
 
         page.dialogs.elements.districtUp.on('change', function () {
@@ -795,6 +1007,7 @@
         page.dialogs.elements.btnUpdate.on('click', () => {
             page.dialogs.elements.frmUpdate.trigger('submit');
         })
+
         page.dialogs.elements.btnDeposit.on('click', () => {
             page.dialogs.elements.frmDeposit.trigger("submit");
         })

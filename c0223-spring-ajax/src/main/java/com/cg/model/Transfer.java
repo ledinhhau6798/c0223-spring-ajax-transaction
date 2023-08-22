@@ -1,5 +1,6 @@
 package com.cg.model;
 
+import com.cg.model.dto.history.HistoryTransferResDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,7 +18,7 @@ import java.math.BigDecimal;
 @Setter
 @Entity
 @Table(name = "transfers")
-public class Transfer extends BaseEntity implements Validator {
+public class Transfer extends BaseEntity  {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,35 +44,17 @@ public class Transfer extends BaseEntity implements Validator {
     private BigDecimal transactionAmount;
 
 
-    @Override
-    public boolean supports(Class<?> clazz) {
-        return Transfer.class.isAssignableFrom(clazz);
-    }
+    public HistoryTransferResDTO toHistoryTransferResDTO(){
+        return new HistoryTransferResDTO()
+                .setId(id)
+                .setSender(sender.getFullName())
+                .setEmailSender(sender.getEmail())
+                .setTransferAmount(transferAmount)
+                .setTransactionAmount(transactionAmount)
 
-    @Override
-    public void validate(Object target, Errors errors) {
-        Transfer transfer = (Transfer) target;
+                .setRecipient(recipient.getFullName())
+                .setEmailRecipient(recipient.getEmail())
 
-        if (transfer.getRecipient().getId() == transfer.getSender().getId()){
-            errors.rejectValue("transferAmount","transfer.transferAmount.duplicate");
-        }
-
-        BigDecimal transferAmount = transfer.getTransferAmount();
-        if (transferAmount == null){
-            errors.rejectValue("transferAmount","transfer.transferAmount.null");
-            return;
-        }
-
-        BigDecimal transactionAmount = transfer.getTransactionAmount();
-        if (transferAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            errors.rejectValue("transferAmount","transfer.transferAmount.zero");
-        }
-
-        if (transfer.getSender().getBalance().compareTo(transactionAmount) < 0) {
-            errors.rejectValue("transferAmount","transfer.transferAmount.exceed");
-        }
-
-
-
+                ;
     }
 }
